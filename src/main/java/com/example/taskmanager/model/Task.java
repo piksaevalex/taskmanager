@@ -5,6 +5,9 @@ import javax.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "task")
 public class Task extends auditmodel {
@@ -26,6 +29,13 @@ public class Task extends auditmodel {
     @JsonIgnore
     private Type type;
 
+    @OneToMany(
+            mappedBy = "task",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Job> jobs = new ArrayList<>();
+
     private static enum Status { NEW, INPROGRESS, DONE; }
 
     @Enumerated(EnumType.STRING)
@@ -33,6 +43,14 @@ public class Task extends auditmodel {
 
     public Long getId() {
         return id;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public Type getType() {
+        return type;
     }
 
     public void setId(Long id) {

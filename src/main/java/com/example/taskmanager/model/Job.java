@@ -32,7 +32,15 @@ public class Job extends auditmodel {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Task task) {
+        this.task = task;
+    }
+
+    public Task getTask() {
+        return task;
+    }
+
+    public void setTask(Long id) {
         this.id = id;
     }
 

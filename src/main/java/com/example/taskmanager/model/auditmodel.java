@@ -23,11 +23,11 @@ public abstract class auditmodel implements Serializable {
     private Date createdAt;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "started_at", nullable = false)
+    @Column(name = "started_at", nullable = true)
     private Date startedAt;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "finished_at", nullable = false)
+    @Column(name = "finished_at", nullable = true)
     private Date finishedAt;
 
     @Column(name="description", columnDefinition = "text")

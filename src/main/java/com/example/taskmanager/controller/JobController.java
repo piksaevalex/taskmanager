@@ -5,12 +5,12 @@ import com.example.taskmanager.model.Job;
 import com.example.taskmanager.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class JobController {
@@ -22,6 +22,11 @@ public class JobController {
     public Page<Job> getJob(Pageable pageable) {
         return jobRepository.findAll(pageable);
     }
+
+    @GetMapping("/job/{taskId}/jobs")
+    public List<Job> getJobbyId(@PathVariable Long taskId) {
+        return jobRepository.findByTaskId(taskId);
+        }
 
     @PostMapping("/job")
     public Job createJob(@Valid @RequestBody Job job) {
