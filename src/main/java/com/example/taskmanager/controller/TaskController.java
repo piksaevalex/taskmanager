@@ -39,7 +39,8 @@ public class TaskController {
                 .map(task -> {
                     task.setStatus(taskRequest.getStatus());
                     System.out.println(taskRepository.findById(taskId));
-                    Flow.createFlow(taskId);
+                    Flow flow = new Flow();
+                    flow.createFlow(taskId);
                     return taskRepository.save(task);
                 }).orElseThrow(() -> new ResourceNotFoundException("Question not found with id " + taskId));
     }
