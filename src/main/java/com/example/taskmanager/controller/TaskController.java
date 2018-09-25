@@ -1,6 +1,7 @@
 package com.example.taskmanager.controller;
 
 import com.example.taskmanager.exception.ResourceNotFoundException;
+import com.example.taskmanager.model.Flow;
 import com.example.taskmanager.model.Task;
 import com.example.taskmanager.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,9 +33,13 @@ public class TaskController {
     @PutMapping("/task/{taskId}")
     public Task updateTask(@PathVariable Long taskId,
                                    @Valid @RequestBody Task taskRequest) {
+
+
         return taskRepository.findById(taskId)
                 .map(task -> {
                     task.setStatus(taskRequest.getStatus());
+                    System.out.println(taskRepository.findById(taskId));
+                    Flow.createFlow(taskId);
                     return taskRepository.save(task);
                 }).orElseThrow(() -> new ResourceNotFoundException("Question not found with id " + taskId));
     }
