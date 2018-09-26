@@ -17,7 +17,7 @@ public class Flow {
     private Long id;
     private Long type_id;
     private int key;
-    private Long task_id;
+    private Long job_id;
     private Long parent;
 
     public Long getId() {
@@ -46,8 +46,8 @@ public class Flow {
         return key;
     }
 
-    private Long getTask_id() {
-        return task_id;
+    private Long getJob_id() {
+        return job_id;
     }
 
     private Long getParent() {
@@ -62,8 +62,8 @@ public class Flow {
         this.key = key;
     }
 
-    private void setTask_id(Long task_id) {
-        this.task_id = task_id;
+    private void setJob_id(Long job_id) {
+        this.job_id = job_id;
     }
 
     private void setParent(Long parent) {
@@ -78,15 +78,11 @@ public class Flow {
         {
             Connection connection;
             connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
-            //PreparedStatement ps;
-            System.out.println(connection);
             PreparedStatement ps = connection.prepareStatement( "SELECT COUNT(*) as count FROM job WHERE task_id=(SELECT id FROM task WHERE type_id=?)" );
             ps.setLong( 1, id );
 
             ResultSet rs = ps.executeQuery();
-            System.out.println(rs);
             if (rs.next()) {
-                System.out.println(rs);
                 result = rs.getInt("count");
             }
             ps.close();
@@ -109,10 +105,10 @@ public class Flow {
             Connection connection;
             connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
             PreparedStatement ps;
-            ps = connection.prepareStatement( "INSERT INTO flow (type_id, key, task_id, parent, result) VALUES (?,?,?,?,?)" );
+            ps = connection.prepareStatement( "INSERT INTO flow (type_id, key, job_id, parent, result) VALUES (?,?,?,?,?)" );
             ps.setLong( 1, flow.getType_id() );
             ps.setInt( 2, flow.getKey() );
-            ps.setLong( 3, flow.getTask_id() );
+            ps.setLong( 3, flow.getJob_id() );
             ps.setLong( 4, flow.getParent() );
             ps.setBoolean(5,flow.getResult() );
 
@@ -160,7 +156,6 @@ public class Flow {
             {
                 id = ( rs.getLong("id") );
                 key = ( rs.getLong("key"));
-                System.out.println("удаляю  : " + id);
                 deleteFlow(id);
                 deleteChildren(key);
             }
@@ -178,7 +173,6 @@ public class Flow {
         List<Integer> result = new ArrayList<>();
         try
         {
-            System.out.println("таск айди  : " + task_id);
             Connection connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
             PreparedStatement ps = connection.prepareStatement( "SELECT * FROM job WHERE task_id=?" );
             ps.setLong( 1, task_id );
@@ -203,11 +197,7 @@ public class Flow {
     // Рекурсивно создаёт дерево
     private void setChildren(int level, List<Integer> result, int key, int n){
         int deltakey = (int) Math.pow( 2, n - level -1);
-        System.out.println("Глубина : "+level);
-        System.out.println("Айди задания! : "+result.get(level));
-        //Flow flow = new Flow();
-        //this.setType_id(task_id);
-        this.setTask_id((long) result.get(level));
+        this.setJob_id((long) result.get(level));
         this.setParent((long) key);
         this.setKey(key - deltakey);
         this.setResult(true);
@@ -224,13 +214,10 @@ public class Flow {
     public void createFlow(Long task_id){
 
         int n = getCountjobs(getType(task_id));
-        System.out.println("Кол-во задач : "+n);
-        System.out.println("Айди задания"+task_id);
-        //Flow flow = new Flow();
         this.setType_id(getType(task_id));
         int key = (int)Math.pow( 2, n);
         this.setKey(key);
-        this.setTask_id(getType(task_id));
+        this.setJob_id(getType(task_id));
         this.setParent(Long.valueOf("0"));
         this.setResult(true);
         insertFlow(this);
@@ -245,7 +232,7 @@ public class Flow {
             long id;
 
             Connection connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
-            PreparedStatement ps = connection.prepareStatement( "SELECT * FROM flow WHERE task_id=? and type_id=? and result=? and parent > 0" );
+            PreparedStatement ps = connection.prepareStatement( "SELECT * FROM flow WHERE job_id=? and type_id=? and result=? and parent > 0" );
             ps.setLong( 1, jobid );
             ps.setLong( 2, type );
             ps.setBoolean( 3, !result );
@@ -256,7 +243,6 @@ public class Flow {
             {
                 id = ( rs.getLong("id") );
                 key = ( rs.getLong("key"));
-                System.out.println("удаляю  : " + id);
                 deleteFlow(id);
             }
             rs.close();
@@ -304,7 +290,7 @@ public class Flow {
             ResultSet rs = ps.executeQuery();
             while( rs.next() )
             {
-                task = ( rs.getLong("task_id") );
+                task = ( rs.getLong("job_id") );
             }
             rs.close();
             connection.close();
