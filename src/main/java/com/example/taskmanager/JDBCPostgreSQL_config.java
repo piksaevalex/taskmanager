@@ -2,7 +2,7 @@ package com.example.taskmanager;
 
 public class JDBCPostgreSQL_config {
     //  Database credentials
-    public static final String DB_URL = "jdbc:postgresql://mydbpostgre.ck8eppxd5qz6.us-east-2.rds.amazonaws.com:5432/test";
-    public static final String USER = "Piksaevrds";
-    public static final String PASS = "4999355a";
+    public static final String DB_URL = "jdbc:127.0.0.1:5432/mybase";
+    public static final String USER = "postgres";
+    public static final String PASS = "mypass";
 }
