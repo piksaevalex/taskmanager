@@ -1,6 +1,7 @@
 package com.example.taskmanager.controller;
 
 import com.example.taskmanager.exception.ResourceNotFoundException;
+import com.example.taskmanager.model.Flow;
 import com.example.taskmanager.model.Job;
 import com.example.taskmanager.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,13 @@ public class JobController {
         return jobRepository.findById(jobId)
                 .map(job -> {
                     job.setStatus(jobRequest.getStatus());
+                    Flow flow = new Flow();
+                    if (jobRequest.getStatus() == Job.Status.DONE){
+                        flow.deleteBranch(jobId,true);
+                    }
+                    if (jobRequest.getStatus() == Job.Status.REJECTED){
+                        flow.deleteBranch(jobId,false);
+                    }
                     return jobRepository.save(job);
                 }).orElseThrow(() -> new ResourceNotFoundException("Question not found with id " + jobId));
     }

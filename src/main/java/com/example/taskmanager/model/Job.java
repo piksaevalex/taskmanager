@@ -23,7 +23,7 @@ public class Job extends auditmodel {
     @JsonIgnore
     private Task task;
 
-    private enum Status { NEW, INPROGRESS, DONE, REJECTED; }
+    public enum Status { NEW, INPROGRESS, DONE, REJECTED; }
 
     @Enumerated(EnumType.STRING)
     private Status status;

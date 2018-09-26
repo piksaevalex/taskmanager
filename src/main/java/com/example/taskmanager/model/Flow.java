@@ -1,13 +1,18 @@
 package com.example.taskmanager.model;
 import com.example.taskmanager.JDBCPostgreSQL_config;
 
+import javax.persistence.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@Entity
+@Table(name = "flow")
 public class Flow {
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(columnDefinition = "serial")
+    private Long id;
     private Long type_id;
     private int key;
     private Long task_id;
@@ -109,6 +114,50 @@ public class Flow {
         }
     }
 
+    public void deleteFlow(Long id )
+    {
+        try
+        {
+            Connection connection = null;
+            connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
+            PreparedStatement ps;
+            ps = connection.prepareStatement( "DELETE from flow Where id=?" );
+            ps.setLong( 1, id);
+            ps.executeUpdate();
+            ps.close();
+            connection.close();
+        }
+        catch( SQLException e )
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteChildren(Long key){
+        Long id = (long) 0;
+        try
+        {
+            Connection connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
+            PreparedStatement ps = connection.prepareStatement( "SELECT * FROM flow WHERE parent=?" );
+            ps.setLong( 1, key );
+
+            ResultSet rs = ps.executeQuery();
+            while( rs.next() )
+            {
+                id = ( rs.getLong("id") );
+                key = ( rs.getLong("key"));
+                deleteFlow(id);
+                deleteChildren(key);
+            }
+            rs.close();
+            connection.close();
+        }
+        catch( SQLException e )
+        {
+            e.printStackTrace();
+        }
+    }
+
     public void getJobId(Long task_id, int key, int n){
         List<Integer> result = new ArrayList<Integer>();
         try
@@ -170,6 +219,34 @@ public class Flow {
         getJobId(task_id, key, n);
     }
 
+    public void deleteBranch(Long jobid, boolean result){
+        try{
+            Long task = getTask(jobid);
+            Long id = (long) 0;
+            Long key = (long) 0;
+
+            Connection connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
+            PreparedStatement ps = connection.prepareStatement( "SELECT * FROM flow WHERE task_id=? and type_id=? and result=? and parent > 0" );
+            ps.setLong( 1, jobid );
+            ps.setLong( 2, task );
+            ps.setBoolean( 3, !result );
+            ResultSet rs = ps.executeQuery();
+            if ( rs.next() )
+            {
+                id = ( rs.getLong("id") );
+                key = ( rs.getLong("key"));
+                deleteFlow(id);
+            }
+            rs.close();
+            connection.close();
+            deleteChildren(key);
+        }
+        catch( SQLException e )
+        {
+            e.printStackTrace();
+        }
+    }
+
     public Long getType(Long task_id){
         Long type = (long) -1;
         try
@@ -191,5 +268,28 @@ public class Flow {
         e.printStackTrace();
         }
         return type;
+    }
+
+    public Long getTask(Long job_id){
+        Long task = (long) -1;
+        try
+        {
+            Connection connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
+            PreparedStatement ps = connection.prepareStatement( "SELECT task_id FROM job WHERE id=?" );
+            ps.setLong( 1, job_id );
+            ResultSet rs = ps.executeQuery();
+            while( rs.next() )
+            {
+                task = ( rs.getLong("task_id") );
+            }
+            rs.close();
+            connection.close();
+
+        }
+        catch( SQLException e )
+        {
+            e.printStackTrace();
+        }
+        return task;
     }
 }
