@@ -19,8 +19,10 @@ http://localhost:8080/task
 
 Создать PUT запрос:
 http://localhost:8080/task/{taskid}
+status: {NEW, INPROGRESS, DONE}
 
 ## Изменить статус задачи:
 
 Создать PUT запрос:
 http://localhost:8080/job/{jobid}
+status: {NEW, INPROGRESS, DONE, REJECTED}
