@@ -9,6 +9,8 @@ import java.util.List;
 @Entity
 @Table(name = "flow")
 public class Flow {
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "serial")
@@ -18,54 +20,63 @@ public class Flow {
     private Long task_id;
     private Long parent;
 
-    public boolean getResult() {
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    private boolean getResult() {
         return result;
     }
 
-    public void setResult(boolean result) {
+    private void setResult(boolean result) {
         this.result = result;
     }
 
     private boolean result;
 
-    public Long getType_id() {
+    private Long getType_id() {
         return type_id;
     }
 
-    public int getKey() {
+    private int getKey() {
         return key;
     }
 
-    public Long getTask_id() {
+    private Long getTask_id() {
         return task_id;
     }
 
-    public Long getParent() {
+    private Long getParent() {
         return parent;
     }
 
-    public void setType_id(Long type_id) {
+    private void setType_id(Long type_id) {
         this.type_id = type_id;
     }
 
-    public void setKey(int key) {
+    private void setKey(int key) {
         this.key = key;
     }
 
-    public void setTask_id(Long task_id) {
+    private void setTask_id(Long task_id) {
         this.task_id = task_id;
     }
 
-    public void setParent(Long parent) {
+    private void setParent(Long parent) {
         this.parent = parent;
     }
 
-    public int getCountjobs( Long id )
+    // Возвращает кол-во работ в задании
+    private int getCountjobs(Long id)
     {
         int result = 0;
         try
         {
-            Connection connection = null;
+            Connection connection;
             connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
             //PreparedStatement ps;
             System.out.println(connection);
@@ -90,11 +101,12 @@ public class Flow {
         return result;
     }
 
-    public void insertFlow(Flow flow )
+    // Вставляет строку в таблицу flow
+    private void insertFlow(Flow flow)
     {
         try
         {
-            Connection connection = null;
+            Connection connection;
             connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
             PreparedStatement ps;
             ps = connection.prepareStatement( "INSERT INTO flow (type_id, key, task_id, parent, result) VALUES (?,?,?,?,?)" );
@@ -114,11 +126,12 @@ public class Flow {
         }
     }
 
-    public void deleteFlow(Long id )
+    // Удаляет из таблицы flow
+    private void deleteFlow(Long id)
     {
         try
         {
-            Connection connection = null;
+            Connection connection;
             connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
             PreparedStatement ps;
             ps = connection.prepareStatement( "DELETE from flow Where id=?" );
@@ -133,8 +146,9 @@ public class Flow {
         }
     }
 
-    public void deleteChildren(Long key){
-        Long id = (long) 0;
+    // Рекурсивно удаляет продолжение ненужной ветки
+    private void deleteChildren(Long key){
+        long id;
         try
         {
             Connection connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
@@ -146,6 +160,7 @@ public class Flow {
             {
                 id = ( rs.getLong("id") );
                 key = ( rs.getLong("key"));
+                System.out.println("удаляю  : " + id);
                 deleteFlow(id);
                 deleteChildren(key);
             }
@@ -158,8 +173,9 @@ public class Flow {
         }
     }
 
-    public void getJobId(Long task_id, int key, int n){
-        List<Integer> result = new ArrayList<Integer>();
+    // Находит все работы по id задания и запускает setChildren
+    private void getJobId(Long task_id, int key, int n){
+        List<Integer> result = new ArrayList<>();
         try
         {
             System.out.println("таск айди  : " + task_id);
@@ -184,7 +200,8 @@ public class Flow {
         setChildren(0, result, key, n);
     }
 
-    public void setChildren(int level, List<Integer> result, int key, int n){
+    // Рекурсивно создаёт дерево
+    private void setChildren(int level, List<Integer> result, int key, int n){
         int deltakey = (int) Math.pow( 2, n - level -1);
         System.out.println("Глубина : "+level);
         System.out.println("Айди задания! : "+result.get(level));
@@ -203,38 +220,43 @@ public class Flow {
         setChildren(level+1,result,key + deltakey, n);
     }
 
+    // Создание flow используется в controller
     public void createFlow(Long task_id){
 
         int n = getCountjobs(getType(task_id));
         System.out.println("Кол-во задач : "+n);
         System.out.println("Айди задания"+task_id);
         //Flow flow = new Flow();
-        this.setType_id(task_id);
+        this.setType_id(getType(task_id));
         int key = (int)Math.pow( 2, n);
         this.setKey(key);
-        this.setTask_id(task_id);
+        this.setTask_id(getType(task_id));
         this.setParent(Long.valueOf("0"));
         this.setResult(true);
         insertFlow(this);
         getJobId(task_id, key, n);
     }
 
+    // Удаляет первый узел, который не выбрали и запускает удаление его узлов детей
     public void deleteBranch(Long jobid, boolean result){
         try{
             Long task = getTask(jobid);
-            Long id = (long) 0;
-            Long key = (long) 0;
+            Long type = getType(task);
+            long id;
 
             Connection connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
             PreparedStatement ps = connection.prepareStatement( "SELECT * FROM flow WHERE task_id=? and type_id=? and result=? and parent > 0" );
             ps.setLong( 1, jobid );
-            ps.setLong( 2, task );
+            ps.setLong( 2, type );
             ps.setBoolean( 3, !result );
             ResultSet rs = ps.executeQuery();
+            long key;
+            key = (long) 0;
             if ( rs.next() )
             {
                 id = ( rs.getLong("id") );
                 key = ( rs.getLong("key"));
+                System.out.println("удаляю  : " + id);
                 deleteFlow(id);
             }
             rs.close();
@@ -247,8 +269,9 @@ public class Flow {
         }
     }
 
-    public Long getType(Long task_id){
-        Long type = (long) -1;
+    //  id Типа по id задания
+    private Long getType(Long task_id){
+        long type = (long) -1;
         try
         {
             Connection connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
@@ -270,8 +293,9 @@ public class Flow {
         return type;
     }
 
-    public Long getTask(Long job_id){
-        Long task = (long) -1;
+    // id Задания по id задачи
+    private Long getTask(Long job_id){
+        long task = (long) -1;
         try
         {
             Connection connection = DriverManager.getConnection(JDBCPostgreSQL_config.DB_URL, JDBCPostgreSQL_config.USER, JDBCPostgreSQL_config.PASS);
